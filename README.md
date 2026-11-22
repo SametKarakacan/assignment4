@@ -564,7 +564,8 @@ P2 both: <section><h2>Eşkıya</h2>from the tags</section>
 
 The first two are the same, because JSX puts the content between the tags into the `children`
 field. When both are written, the content between the tags wins. In TypeScript, writing both is
-a compile error (see P7).
+a compile error: `TS2710: 'children' are specified twice. The attribute named 'children' will be
+overwritten.` (see P7).
 
 ### P3: what children can be
 
@@ -694,15 +695,30 @@ P7 ComponentProps: <button type="button" disabled="" title="Play the film">▶ I
 - `ComponentProps<'button'>` is the type of every prop a real `<button>` accepts. With rest and
   spread, `PlayButton` accepts `disabled`, `title`, `onClick` without me listing them.
 
-What the compiler rejects (the lines are comments at the end of `ts/props.tsx`; I uncommented
-them one at a time and ran `npm run check`):
+What the compiler rejects. I put these five lines in a temporary file `ts/rejected.tsx`, ran
+`npm run check`, copied the messages and deleted the file again (so `npm run check` passes now).
+The same lines are listed as comments at the end of `ts/props.tsx`.
 
 | Code | Error on my machine |
 |---|---|
-| `<Shelf>{{ title: 'Parasite' }}</Shelf>` | PASTE THE MESSAGE |
-| `<Poster>Parasite</Poster>` (no year) | PASTE THE MESSAGE |
-| `<PlayButton href="/watch">Inception</PlayButton>` | PASTE THE MESSAGE |
-| `<FilmCardB title={2010} />` | PASTE THE MESSAGE |
+| `<Shelf>{{ title: 'Parasite' }}</Shelf>` | `TS2353: Object literal may only specify known properties, and 'title' does not exist in type 'ReactElement<...> \| Iterable<ReactNode> \| ReactPortal \| Promise<...>'.` |
+| `<Poster>Parasite</Poster>` (no year) | `TS2741: Property 'year' is missing in type '{ children: string; }' but required in type '{ year: number; }'.` |
+| `<PlayButton href="/watch">Inception</PlayButton>` | `TS2322: ... Property 'href' does not exist on type 'IntrinsicAttributes & ClassAttributes<HTMLButtonElement> & ButtonHTMLAttributes<HTMLButtonElement>'. Did you mean 'ref'?` |
+| `<FilmCardB title={2010} />` | `TS2322: Type 'number' is not assignable to type 'string'.` |
+| `<FilmCardB title="Parasite" children="a">b</FilmCardB>` | `TS2710: 'children' are specified twice. The attribute named 'children' will be overwritten.` |
+
+What the messages show:
+
+- An object is not a `ReactNode`. The long type in the first message is the list of things
+  `ReactNode` can be; a plain `{ title }` object is none of them. JavaScript only finds this out
+  when it renders (P3 object), TypeScript finds it before the code runs.
+- `PropsWithChildren` makes only `children` optional; my own `year` is still required. The
+  message also shows that the content between the tags arrived as `{ children: string }`, which
+  is P2 again: children is just a prop.
+- `ComponentProps<'button'>` knows exactly which attributes a real `<button>` has, so `href`
+  (a link attribute) is rejected.
+- In JavaScript, writing `children` twice was allowed and the tags won (P2 both). TypeScript
+  turns the same thing into an error.
 
 ### TypeScript topics T1 to T5
 
@@ -799,19 +815,39 @@ The messages are from `tsc` in strict mode with `noUncheckedIndexedAccess`.
 
 ## My own log
 
-These are real things that went wrong or surprised me while I did this assignment.
+These are real things that went wrong or surprised me while I did this assignment, in the order
+they happened.
 
 1. **npm in the wrong folder.** I ran `npm install` in `C:\Users\HECTOR` instead of the project
    folder and got `npm error enoent Could not read package.json: Error: ENOENT: no such file or
-   directory, open 'C:\Users\HECTOR\package.json'`. I learned that npm looks for
-   `package.json` in the current folder, so I must `cd` into the project first.
-2. **Two commands on one line.** I pasted `cd ...` right after `npm run check` without pressing
-   Enter, so PowerShell ran `npm run checkcd $HOME\...` as one command and I stayed in the wrong
-   folder. Now I look at the `PS C:\...>` part of the prompt before I run anything.
-3. WRITE YOUR OWN
-4. WRITE YOUR OWN
-5. WRITE YOUR OWN
+   directory, open 'C:\Users\HECTOR\package.json'`. npm looks for `package.json` in the current
+   folder, so I must `cd` into the project first.
+2. **The folder was not where I thought.** `cd $HOME\Downloads\starter_1\assignment4` failed with
+   `Cannot find path ... because it does not exist.` I had not unzipped the starter where I
+   thought. I unzipped the project again into a short, known path (`C:\Users\HECTOR\assignment4`)
+   and checked the `PS C:\...>` prompt before every command.
+3. **Two commands on one line.** I pasted `npm run check` and the next command without pressing
+   Enter in between, so npm received one command, `npm run checknpm run check...`, and answered
+   `npm error Missing script: "checknpm"`. The same thing happened with a pasted PowerShell block:
+   `Set-Content : A positional parameter cannot be found that accepts argument 'check'.` I learned
+   to press Enter after a paste and wait for the prompt before the next command.
+4. **The missing semicolon (pitfall 6 in my own code).** I deleted the `;` in front of
+   `[tonight, tomorrow] = [tomorrow, tonight]` in `js/arrays.mjs` and ran it. Forms 1 and 2 still
+   printed, then it stopped with `ReferenceError: Cannot access 'tomorrow' before initialization`.
+   JavaScript joined the line with the line before it and read
+   `let tomorrow = 'Eşkıya'[tonight, tomorrow] = [tomorrow, tonight]`, so it used `tomorrow` while
+   it was still being created. In `pitfalls.mjs` the same mistake gave no error at all, only a
+   wrong result, which I find even more dangerous. I put the `;` back.
+5. **What TypeScript rejects in props.** I wrote five wrong component calls in a temporary file
+   and `npm run check` reported `Found 5 errors in the same file`. Two things surprised me: the
+   error for an object child lists the whole `ReactNode` type, and writing `children` both as an
+   attribute and between the tags is an error (`TS2710`) in TypeScript, although in JavaScript it
+   ran and the tags simply won. The messages are in the P7 table.
 
 ## Bonus 4: Git repository
 
-PASTE THE REPOSITORY LINK HERE
+https://github.com/SametKarakacan/assignment4
+
+The history shows the work in steps: the examples, the guide draft, the P7 messages and my
+log, then `output.txt`. All commits are from the same evening (22 November), because I did
+the assignment in one session.
