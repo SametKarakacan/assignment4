@@ -813,6 +813,14 @@ The messages are from `tsc` in strict mode with `noUncheckedIndexedAccess`.
 | `as const` tuple | the pattern | `as const` for exact types | reading a 3rd item: `TS2493: Tuple type 'readonly ["Eşkıya", 1996]' of length '2' has no element at index '2'.` |
 | 12 entries | the loop | nothing: `Object.entries` on `Record<string, number>` gives `[string, number][]` | none |
 
+## Bonus 4: Git repository
+
+https://github.com/SametKarakacan/assignment4
+
+The history shows the work in steps: the examples, the guide draft, the P7 messages and my
+log, then `output.txt`. All commits are from the same evening (22 November), because I did
+the assignment in one session.
+
 ## My own log
 
 These are real things that went wrong or surprised me while I did this assignment, in the order
@@ -850,11 +858,3 @@ they happened.
    `output.txt` I made in PowerShell was saved as UTF-16 (Git showed `0 insertions, 0 deletions`
    when I replaced it), so I made it again with `cmd /c "npm run all > output.txt"` to get
    normal UTF-8 text with the Turkish letters.
-
-## Bonus 4: Git repository
-
-https://github.com/SametKarakacan/assignment4
-
-The history shows the work in steps: the examples, the guide draft, the P7 messages and my
-log, then `output.txt`. All commits are from the same evening (22 November), because I did
-the assignment in one session.
