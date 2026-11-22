@@ -843,6 +843,13 @@ they happened.
    error for an object child lists the whole `ReactNode` type, and writing `children` both as an
    attribute and between the tags is an error (`TS2710`) in TypeScript, although in JavaScript it
    ran and the tags simply won. The messages are in the P7 table.
+6. **Two lines did not go into output.txt.** When I ran `npm run all > output.txt`, two lines
+   still appeared in the terminal: `Functions are not valid as a React child...` and
+   ``ShowKey: `key` is not a prop...``. They are not in `output.txt`. React prints its warnings
+   with `console.error`, which writes to stderr, and `>` only redirects stdout. Also, the first
+   `output.txt` I made in PowerShell was saved as UTF-16 (Git showed `0 insertions, 0 deletions`
+   when I replaced it), so I made it again with `cmd /c "npm run all > output.txt"` to get
+   normal UTF-8 text with the Turkish letters.
 
 ## Bonus 4: Git repository
 
