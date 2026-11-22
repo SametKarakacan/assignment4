@@ -4,7 +4,7 @@
 
 
 > destructuring-guide@0.0.0 js
-> node js/arrays.mjs && node js/objects.mjs && node js/params.mjs && node js/pitfalls.mjs && tsx js/props.jsx
+> node js/arrays.mjs && node js/objects.mjs && node js/params.mjs && node js/pitfalls.mjs && tsx js/props.jsx && node js/depth.mjs
 
 form 1: 148 196
 form 1 (plain): 148 196
@@ -83,9 +83,39 @@ P6 null: <p>Rating: []</p>
 P6 zero: <p>Rating: [0]</p>
 extra key: <p>key is undefined</p>
 extra change props: <p>TypeError</p>
+D1 string: E ş [ 'k', 'ı', 'y', 'a' ]
+D1 Set (duplicates removed first): drama crime
+D1 Map (each item is a pair): Parasite 2019
+D1   [Symbol.iterator]() called
+D1   next() called
+D1   next() called
+D1   return() called: the pattern closed the iterator early
+D1 custom iterable: Inception Interstellar
+D1   generator: before Inception
+D1   generator: before Interstellar
+D1 generator: Inception Interstellar
+D1 object pattern on a string: 8
+D1 array pattern on an object: film is not iterable
+D2   computing the default for missing
+D2 lazy defaults: Babam ve Oğlum | default missing
+D2 default uses an earlier variable: kış-uykusu
+D2 default uses a later variable: ReferenceError - Cannot access 'late' before initialization
+D2 left to right: 1 50 2 | counter = 2
+D3 catch ({ name, message }): RangeError - Seat H99 does not exist in hall 3
+D3 targets are properties: { film: 'Inception', seat: 'H12', year: 2014 }
+D3 swap inside an array: [ 'Inception', 'Parasite', 'Eşkıya' ]
+D3 for...of: 0 Inception
+D3 for...of: 1 Parasite
+D3 for...in: title
+D3 for...in: year
+D3 for...in: director
+D3 dynamic import: eskiya.mp4 .mp4
+D3 import with a colon: SyntaxError: Unexpected token ':'
+D5 deep pattern: 2014 Kış Uykusu Nuri Bilge Ceylan
+D5 refactored: 2014 Kış Uykusu Nuri Bilge Ceylan
 
 > destructuring-guide@0.0.0 ts
-> tsx ts/arrays.ts && tsx ts/objects.ts && tsx ts/params.ts && tsx ts/types.ts && tsx ts/props.tsx
+> tsx ts/arrays.ts && tsx ts/objects.ts && tsx ts/params.ts && tsx ts/types.ts && tsx ts/props.tsx && tsx ts/depth.ts
 
 form 1: 148 196
 form 2: Interstellar [ 'Parasite', 'Spirited Away', 'Eşkıya' ]
@@ -141,3 +171,8 @@ P6 null: <p>Rating: []</p>
 P7 PropsWithChildren: <figure>Parasite<figcaption>2019</figcaption></figure>
 P7 PropsWithChildren, no children: <figure><figcaption>2019</figcaption></figure>
 P7 ComponentProps: <button type="button" disabled="" title="Play the film">▶ Inception</button>
+D4a First/Rest/Last: Parasite [ 2019, true ] true
+D4a value-level: Eşkıya [ 1996, true ]
+D4b YearOf<Film>: 2010
+D4c Parameters: Tonight: Inception (2010) | first arg title: Inception
+D4c ReturnType is string: string
