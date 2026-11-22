@@ -5,7 +5,8 @@ Student number: 2022502147
 
 MIS 233 Web Based Application Programming, Assignment 4.
 
-Bonuses claimed: **Bonus 4: Git repository** (see the end of this file).
+Bonuses claimed: **Bonus 1: LaTeX**, **Bonus 2: Depth**, **Bonus 3: Real code** and
+**Bonus 4: Git repository** (each has its own section before My own log).
 
 All my examples use my own film list: Inception, Interstellar, The Godfather, Kış Uykusu,
 Parasite, Spirited Away, Eşkıya and Babam ve Oğlum. Every output below is copied from
@@ -812,6 +813,245 @@ The messages are from `tsc` in strict mode with `noUncheckedIndexedAccess`.
 | 11 parameters | the pattern and the defaults | a type after the pattern | no type: `TS7031: Binding element 'title' implicitly has an 'any' type.`; no `= {}`: `TS2554: Expected 1 arguments, but got 0.` |
 | `as const` tuple | the pattern | `as const` for exact types | reading a 3rd item: `TS2493: Tuple type 'readonly ["Eşkıya", 1996]' of length '2' has no element at index '2'.` |
 | 12 entries | the loop | nothing: `Object.entries` on `Record<string, number>` gives `[string, number][]` | none |
+
+## Bonus 1: LaTeX
+
+The whole guide is also a LaTeX document: `latex/guide.tex` (the source) and `latex/guide.pdf`
+(the result). It has a linked table of contents, all code in `listings` blocks with the same
+style, and real tables (`longtable` with `booktabs` rules).
+
+How it is made:
+
+```
+pandoc README.md -s --listings --toc --shift-heading-level-by=-1 -H latex/header.tex -o latex/guide.tex
+cd latex
+latexmk -pdf guide.tex
+```
+
+`pandoc` turns the Markdown into LaTeX (the first heading becomes the title),
+`latex/header.tex` sets the page, the fonts and the `listings` style, and `latexmk -pdf` compiles
+it with pdflatex. The log has no errors and no overfull boxes.
+
+One problem I had to solve: I first compiled with XeLaTeX, and in every code listing the Turkish
+letters came out in the wrong order ("Eşkıya" was printed as "şıEkya"). `listings` reads the
+source one byte at a time and does not handle letters outside ASCII inside a word. With pdflatex
+and the `literate` option in `header.tex`, which maps each Turkish letter to a LaTeX accent
+command, the order is correct.
+
+## Bonus 2: Depth
+
+Bonus 2: Depth. Five directions, all with my own code in `js/depth.mjs` and `ts/depth.ts`
+(both run as part of `npm run all`).
+
+### D1: what an array pattern really needs is an iterable
+
+```js
+const [firstLetter, secondLetter, ...restLetters] = 'Eşkıya'
+const [firstGenre, secondGenre] = new Set(['drama', 'drama', 'crime'])
+const [[firstKey, firstValue]] = new Map([['Parasite', 2019], ['Eşkıya', 1996]])
+const [reel1, reel2] = loggingReel(['Inception', 'Interstellar', 'Parasite'])
+const [g1, g2] = watchOrder()            // a generator with three yields
+const { length } = 'Parasite'
+const [x] = film                         // a plain object
+```
+
+```
+D1 string: E ş [ 'k', 'ı', 'y', 'a' ]
+D1 Set (duplicates removed first): drama crime
+D1 Map (each item is a pair): Parasite 2019
+D1   [Symbol.iterator]() called
+D1   next() called
+D1   next() called
+D1   return() called: the pattern closed the iterator early
+D1 custom iterable: Inception Interstellar
+D1   generator: before Inception
+D1   generator: before Interstellar
+D1 generator: Inception Interstellar
+D1 object pattern on a string: 8
+D1 array pattern on an object: film is not iterable
+```
+
+An array pattern does not use `[0]` and `[1]`. It calls `[Symbol.iterator]()` on the value and
+then `next()` once for every place in the pattern. My `loggingReel` shows this: two places in the
+pattern, two `next()` calls, and then `return()`, because the pattern stops before the iterator
+is finished and closes it. The generator shows the same thing from the other side: the code
+before the third `yield` never runs, because nobody asks for a third value. That is why a
+string, a Set and a Map work (they are iterable) and a plain object does not
+(`film is not iterable`). An object pattern is different: it only reads properties, so even a
+string works with `{ length }`.
+
+### D2: when defaults are computed
+
+```js
+const [given = makeDefault('given'), missing = makeDefault('missing')] = ['Babam ve Oğlum']
+const { title, slug = title.toLowerCase().replaceAll(' ', '-') } = film
+const [early = late, late = 1] = []
+const [n1 = next(), n2 = next(), n3 = next()] = [undefined, 50]
+```
+
+```
+D2   computing the default for missing
+D2 lazy defaults: Babam ve Oğlum | default missing
+D2 default uses an earlier variable: kış-uykusu
+D2 default uses a later variable: ReferenceError - Cannot access 'late' before initialization
+D2 left to right: 1 50 2 | counter = 2
+```
+
+A default is an expression that runs **only when it is needed**: `makeDefault('given')` was never
+called, because that place had a value. The pattern is read from left to right, one variable
+after another, so a default can use a variable made earlier in the same pattern (`slug` uses
+`title`), but not one made later (`late` does not exist yet, the same error as in my log
+entry 4). The counter shows both rules: `n2` had a value, so `next()` ran only twice, for `n1`
+and `n3`.
+
+### D3: destructuring in other places
+
+```js
+catch ({ name, message }) { ... }
+;[ticket.film, ticket.seat] = ['Inception', 'H12']
+;({ year: ticket.year } = film)
+;[ranking[0], ranking[2]] = [ranking[2], ranking[0]]
+for (const [i, name] of ['Inception', 'Parasite'].entries()) ...
+for (const key in film) ...
+const { basename, extname } = await import('node:path')
+import { basename: base } from "node:path"   // run as a real module in a second process
+```
+
+```
+D3 catch ({ name, message }): RangeError - Seat H99 does not exist in hall 3
+D3 targets are properties: { film: 'Inception', seat: 'H12', year: 2014 }
+D3 swap inside an array: [ 'Inception', 'Parasite', 'Eşkıya' ]
+D3 for...of: 0 Inception
+D3 for...of: 1 Parasite
+D3 for...in: title
+D3 for...in: year
+D3 for...in: director
+D3 dynamic import: eskiya.mp4 .mp4
+D3 import with a colon: SyntaxError: Unexpected token ':'
+```
+
+- `catch` takes a pattern like a parameter (form 11), so I can take `name` and `message` out of
+  the error directly.
+- The targets of an assignment do not have to be variables. `ticket.film`, `ticket.year` and
+  `ranking[0]` are places to write to. This is how two items swap inside an array.
+- `for...of` gives the values (here `[index, value]` pairs), so a pattern fits. `for...in` gives
+  only the keys as strings, so there is nothing to take apart.
+- `await import()` returns an ordinary object, so form 5 works on it. A static
+  `import { basename as base }` looks similar but is not destructuring: it uses `as`, and a
+  colon there is a `SyntaxError`. Imports are live links to the other module, not copies.
+
+### D4: destructuring types with `infer` (TypeScript)
+
+```ts
+type First<T extends readonly unknown[]> = T extends readonly [infer Head, ...unknown[]] ? Head : never
+type Rest<T extends readonly unknown[]>  = T extends readonly [unknown, ...infer Tail] ? Tail : never
+type Last<T extends readonly unknown[]>  = T extends readonly [...unknown[], infer End] ? End : never
+type YearOf<T> = T extends { year: infer Y } ? Y : never
+type DescribeArgs = Parameters<typeof describeFilm>   // [Film, string]
+```
+
+```
+D4a First/Rest/Last: Parasite [ 2019, true ] true
+D4a value-level: Eşkıya [ 1996, true ]
+D4b YearOf<Film>: 2010
+D4c Parameters: Tonight: Inception (2010) | first arg title: Inception
+D4c ReturnType is string: string
+```
+
+`infer` is the same idea as a pattern, but for types: `[infer Head, ...unknown[]]` has the shape
+of `[first, ...rest]`, and `Head` becomes the type in that position. `Parameters<F>` is built in
+the same way and gives the parameter list of a function as a tuple, so `describeFilm(...args)`
+type-checks. I also checked that the types really reject wrong values:
+`const a: First<Row> = 1` gives `TS2322: Type 'number' is not assignable to type 'string'.`,
+`const b: Rest<Row> = [2019]` gives `Source has 1 element(s) but target requires 2.`, and
+`First<[]>` is `never`, so nothing can be assigned to it.
+
+### D5: when destructuring makes code worse
+
+```js
+const {
+  edition: {
+    year: festivalYear,
+    winner: {
+      film: { title: winnerTitle, director: { name: winnerDirector } },
+    },
+  },
+} = festival
+
+// refactored
+const { year: year2, winner } = festival.edition
+const { title: title2, director } = winner.film
+```
+
+```
+D5 deep pattern: 2014 Kış Uykusu Nuri Bilge Ceylan
+D5 refactored: 2014 Kış Uykusu Nuri Bilge Ceylan
+```
+
+Both give the same values, but the deep pattern is hard to read: the names that become variables
+(`festivalYear`, `winnerTitle`, `winnerDirector`) are hidden between path names that are not
+variables (`edition`, `winner`, `film`, `director`). If any middle level is missing the whole
+line throws (pitfall 1) and the error does not say which level. Two short steps are easier to
+read, easier to debug (I can print `winner` in between) and need fewer renames. My rule now: one
+level of nesting is fine, more than that is a sign to split.
+
+## Bonus 3: Real code
+
+Bonus 3: Real code. Eleven cases from three sources:
+
+- **Task Manager starter** from Assignment 3 (`starter/src/`, written by the instructor).
+- **An installed library:** `node_modules/esbuild/lib/main.js` in this project (esbuild 0.28.2,
+  installed by `npm install` because `tsx` uses it).
+- **An open-source project:** shadcn/ui, a React component collection,
+  https://github.com/shadcn-ui/ui at commit `bfa64ff4d1cb7317d2403ecb176df6826d4caffc`
+  (21 November 2026), folder `apps/v4/registry/new-york-v4/ui/`.
+
+| # | File and line | Code | Form | Without destructuring |
+|-|-----|-------------|---|------------|
+| 1 | Task Manager `App.tsx:37` | `const [tasks, dispatch] = useReducer(taskReducer, [])` | 1 | `const pair = useReducer(taskReducer, [])` `const tasks = pair[0]` `const dispatch = pair[1]` |
+| 2 | Task Manager `App.tsx:8` | `function AddForm({ dispatch }: { dispatch: Dispatch<Action> })` | 11 + 5 | `function AddForm(props: ...) { const dispatch = props.dispatch; ... }` |
+| 3 | Task Manager `TaskRow.tsx:5` | `function TaskRow({ task, onNext, onDelete }: TaskRowProps)` | 11 + 5 | `function TaskRow(props: TaskRowProps)` and `props.task`, `props.onNext`, `props.onDelete` |
+| 4 | esbuild `main.js:193` | `let { buffer, byteOffset, byteLength } = bytes;` | 5 | `let buffer = bytes.buffer;` `let byteOffset = bytes.byteOffset;` `let byteLength = bytes.byteLength;` |
+| 5 | esbuild `main.js:989-992` | `let { flags, mangleCache } = flagsForTransformOptions(...)` | 5 on a returned object | `let result = flagsForTransformOptions(...);` `let flags = result.flags;` `let mangleCache = result.mangleCache;` |
+| 6 | esbuild `main.js:1598` | `for (const { name, callback, note } of onEndCallbacks)` | 12 with an object pattern | `for (const item of onEndCallbacks) { const name = item.name; ... }` |
+| 7 | esbuild `main.js:1747` | `let { file, line, column } = e.location;` | 5 | `let file = e.location.file; ...` |
+| 8 | shadcn `button.tsx:40-49` | `function Button({ className, variant = "default", size = "default", asChild = false, ...props })` | 11 + 7 + 8 | `function Button(props) { const variant = props.variant === undefined ? "default" : props.variant; ... }` |
+| 9 | shadcn `dialog.tsx:50-56` | `function DialogContent({ className, children, showCloseButton = true, ...props })` | 11 + 7 + 8 | the same, with `props.children` |
+| 10 | shadcn `sidebar.tsx:56-63` | `function SidebarProvider({ defaultOpen = true, open: openProp, onOpenChange: setOpenProp, ... })` | 11 + 6 + 7 | `const openProp = props.open; const setOpenProp = props.onOpenChange` |
+| 11 | shadcn `chart.tsx:153` | `const [item] = payload` | 1 | `const item = payload[0]` |
+
+What I noticed:
+
+- **Case 7 guards against pitfall 1.** Two lines earlier (`main.js:1745`) esbuild returns early
+  with `if (!e.location) return ...`. Without that check, destructuring `e.location` would throw
+  `Cannot destructure property 'file' of ... as it is undefined.`
+- **Case 10 is form 6 for a reason.** The component wants its own variable called `open`
+  (`sidebar.tsx:75`: `const open = openProp ?? _open`), so the prop `open` is renamed to
+  `openProp` while it is taken out.
+- **Case 11 matches T3.** `payload` is an array, so `item` can be `undefined`, and the next line
+  (`chart.tsx:154`) reads it with `item?.dataKey`, the same way I dealt with
+  `noUncheckedIndexedAccess`.
+
+**A React props case: what is a prop and what is children.** In case 3 (`TaskRow`) `task`,
+`onNext` and `onDelete` are all props, and there are no children: `App.tsx` uses it as
+`<TaskRow ... />` without content. The shadcn cases are more interesting. In case 9
+(`DialogContent`) `children` is taken out by name, because the component places it itself:
+`{children}` at `dialog.tsx:69`, followed by its own close button. Everything else
+(`...props`) is spread onto the dialog element. In case 8 (`Button`) `children` is **never
+written at all**, yet `<Button>Play</Button>` works: children is just one more prop, so it stays
+inside `...props` and the spread `{...props}` at `button.tsx:58` passes it to the real button
+element. This is P2 and P4 in real code: the component only takes children out when it needs to
+put it somewhere special.
+
+**A case where destructuring makes the code worse.** `ChartTooltipContent` in shadcn's
+`chart.tsx:118-145` takes 13 props apart in its parameter list, 3 of them with defaults, and the
+type after the pattern is another 14 lines of intersections (`&`) and `Omit<...>`. The function
+body only starts on line 146. When I read it, I cannot see at a glance which names are props from
+Recharts, which are DOM props and which are new, or which of them are optional. I would write a
+named type, `type ChartTooltipContentProps = ...`, take `(props: ChartTooltipContentProps)` as
+the parameter, and destructure inside the body in small groups (the label props together, the
+indicator props together). The forms are the same, but the signature becomes one line and the
+type gets a name that can be reused and read on its own.
 
 ## Bonus 4: Git repository
 
