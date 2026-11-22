@@ -1,0 +1,44 @@
+% Samet Kaan Karakaçan, 2022502147
+% Page, fonts and code style for the LaTeX version of the field guide (compiled with pdflatex).
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage[sc]{mathpazo}
+\renewcommand{\ttdefault}{lmtt}
+\usepackage{amssymb}
+\usepackage{upquote}
+\usepackage{xcolor}
+\definecolor{codebg}{HTML}{F4F7FB}
+\definecolor{coderule}{HTML}{C9D3E0}
+\definecolor{keyword}{HTML}{6A3FB0}
+\definecolor{string}{HTML}{0B6B50}
+\definecolor{comment}{HTML}{6B7A8F}
+\lstdefinelanguage{JavaScript}{
+  keywords={const,let,var,function,return,if,else,for,of,in,new,try,catch,throw,import,from,export,default,type,await,yield,typeof,as,extends,infer,true,false,null,undefined},
+  sensitive=true,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  morestring=[b]`
+}
+\lstset{
+  language=JavaScript,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{keyword}\bfseries,
+  stringstyle=\color{string},
+  commentstyle=\color{comment}\itshape,
+  backgroundcolor=\color{codebg},
+  frame=single, rulecolor=\color{coderule}, framesep=4pt,
+  xleftmargin=5pt, xrightmargin=5pt,
+  breaklines=true, breakatwhitespace=false,
+  postbreak=\mbox{\textcolor{comment}{$\hookrightarrow$}\space},
+  columns=fullflexible, keepspaces=true,
+  showstringspaces=false, upquote=true, extendedchars=true,
+  % listings reads one byte at a time, so the Turkish letters in my film names
+  % and the play sign are mapped to LaTeX commands here.
+  literate={ş}{{\c{s}}}1 {Ş}{{\c{S}}}1 {ı}{{\i}}1 {İ}{{\.I}}1 {ğ}{{\u{g}}}1 {Ğ}{{\u{G}}}1
+           {ç}{{\c{c}}}1 {Ç}{{\c{C}}}1 {ö}{{\"o}}1 {Ö}{{\"O}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1
+           {▶}{{$\blacktriangleright$}}1
+}
+\setlength{\emergencystretch}{4em}
+\AtBeginDocument{\hypersetup{colorlinks=true, linkcolor=blue!45!black, urlcolor=blue!45!black}}
+\renewcommand{\arraystretch}{1.25}
